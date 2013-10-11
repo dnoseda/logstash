@@ -1,6 +1,7 @@
 require "logstash/namespace"
 require "logstash/outputs/base"
 require "stud/buffer"
+require "java"
 
 # This output lets you store logs in elasticsearch.
 #
@@ -50,7 +51,7 @@ class LogStash::Outputs::ElasticSearchHTTP < LogStash::Outputs::Base
   public
   def register
     require "ftw" # gem ftw
-    @agent = FTW::Agent.new
+    @agent = com.ning.http.client.AsyncHttpClient.new()
     @queue = []
 
     @bulk_url = "http://#{@host}:#{@port}/_bulk?replication=#{@replication}"
@@ -91,7 +92,7 @@ class LogStash::Outputs::ElasticSearchHTTP < LogStash::Outputs::Base
 
   def post(body)
     begin
-      response = @agent.post!(@bulk_url, :body => body)
+      response = @agent.preparePost(@bulk_url).setBody(body).execute().get()
     rescue EOFError
       @logger.warn("EOF while writing request or reading response header from elasticsearch",
                    :host => @host, :port => @port)
@@ -102,14 +103,14 @@ class LogStash::Outputs::ElasticSearchHTTP < LogStash::Outputs::Base
     # This will also free up the connection for reuse.
     body = ""
     begin
-      response.read_body { |chunk| body += chunk }
+      response.getResponseBody() { |chunk| body += chunk }
     rescue EOFError
       @logger.warn("EOF while reading response body from elasticsearch",
                    :host => @host, :port => @port)
       return # abort this flush
     end
 
-    if response.status != 200
+    if response.getStatusCode() != 200
       @logger.error("Error writing (bulk) to elasticsearch",
                     :response => response, :response_body => body,
                     :request_body => @queue.join("\n"))

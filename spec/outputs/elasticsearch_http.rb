@@ -29,39 +29,39 @@ describe "outputs/elasticsearch_http" do
           flush_size => #{flush_size}
         }
       }
-    CONFIG
+          CONFIG
 
-    agent do
-      # Try a few times to check if we have the correct number of events stored
-      # in ES.
-      #
-      # We try multiple times to allow final agent flushes as well as allowing
-      # elasticsearch to finish processing everything.
-      ftw = FTW::Agent.new
-      ftw.post!("http://localhost:9200/#{index}/_flush")
+          agent do
+            # Try a few times to check if we have the correct number of events stored
+            # in ES.
+            #
+            # We try multiple times to allow final agent flushes as well as allowing
+            # elasticsearch to finish processing everything.
+            ftw = com.ning.http.client.AsyncHttpClient.new()
+            ftw.preparePost("http://localhost:9200/#{index}/_flush").execute().get()
 
-      # Wait until all events are available.
-      Stud::try(10.times) do
-        data = ""
-        response = ftw.get!("http://127.0.0.1:9200/#{index}/_count?q=*")
-        response.read_body { |chunk| data << chunk }
-        result = JSON.parse(data)
-        count = result["count"]
-        insist { count } == event_count
-      end
+            # Wait until all events are available.
+            Stud::try(10.times) do
+              data = ""
+              response = ftw.prepareGet("http://127.0.0.1:9200/#{index}/_count?q=*").execute().get()
+              response.read_body { |chunk| data << chunk }
+              result = JSON.parse(data)
+              count = result["count"]
+              insist { count } == event_count
+            end
 
-      response = ftw.get!("http://127.0.0.1:9200/#{index}/_search?q=*&size=1000")
-      data = ""
-      response.read_body { |chunk| data << chunk }
-      result = JSON.parse(data)
-      result["hits"]["hits"].each do |doc|
-        # With no 'index_type' set, the document type should be the type
-        # set on the input
-        insist { doc["_type"] } == type
-        insist { doc["_index"] } == index
-        insist { doc["_source"]["message"] } == "hello world"
-      end
-    end
+            response = ftw.prepareGet("http://127.0.0.1:9200/#{index}/_search?q=*&size=1000").execute().get()
+            data = ""
+            response.read_body { |chunk| data << chunk }
+            result = JSON.parse(data)
+            result["hits"]["hits"].each do |doc|
+              # With no 'index_type' set, the document type should be the type
+              # set on the input
+              insist { doc["_type"] } == type
+              insist { doc["_index"] } == index
+              insist { doc["_source"]["message"] } == "hello world"
+            end
+          end
   end
 
   describe "testing index_type" do
@@ -85,30 +85,31 @@ describe "outputs/elasticsearch_http" do
             flush_size => #{flush_size}
           }
         }
-      CONFIG
+            CONFIG
 
-      agent do
-        ftw = FTW::Agent.new
-        ftw.post!("http://localhost:9200/#{index}/_flush")
+            agent do
+              ftw = com.ning.http.client.AsyncHttpClient.new()
+              ftw.preparePost("http://localhost:9200/#{index}/_flush").execute().get()
 
-        # Wait until all events are available.
-        Stud::try(10.times) do
-          data = ""
-          response = ftw.get!("http://127.0.0.1:9200/#{index}/_count?q=*")
-          response.read_body { |chunk| data << chunk }
-          result = JSON.parse(data)
-          count = result["count"]
-          insist { count } == event_count
-        end
+              # Wait until all events are available.
+              Stud::try(10.times) do
+                data = ""
+                response = ftw.prepareGet("http://127.0.0.1:9200/#{index}/_count?q=*").execute().get()
+                response.read_body { |chunk| data << chunk }
+                result = JSON.parse(data)
+                count = result["count"]
+                insist { count } == event_count
+              end
 
-        response = ftw.get!("http://127.0.0.1:9200/#{index}/_search?q=*&size=1000")
-        data = ""
-        response.read_body { |chunk| data << chunk }
-        result = JSON.parse(data)
-        result["hits"]["hits"].each do |doc|
-          insist { doc["_type"] } == "logs"
-        end
-      end
+              response = ftw.prepareGet("http://127.0.0.1:9200/#{index}/_search?q=*&size=1000").execute().get()
+              response = ftw.prepareGet("http://127.0.0.1:9200/#{index}/_search?q=*&size=1000").execute().get()
+              data = ""
+              response.read_body { |chunk| data << chunk }
+              result = JSON.parse(data)
+              result["hits"]["hits"].each do |doc|
+                insist { doc["_type"] } == "logs"
+              end
+            end
     end
 
     describe "default event type value" do
@@ -132,30 +133,30 @@ describe "outputs/elasticsearch_http" do
             flush_size => #{flush_size}
           }
         }
-      CONFIG
+            CONFIG
 
-      agent do
-        ftw = FTW::Agent.new
-        ftw.post!("http://localhost:9200/#{index}/_flush")
+            agent do
+              ftw = com.ning.http.client.AsyncHttpClient.new()
+              ftw.preparePost("http://localhost:9200/#{index}/_flush").execute().get()
 
-        # Wait until all events are available.
-        Stud::try(10.times) do
-          data = ""
-          response = ftw.get!("http://127.0.0.1:9200/#{index}/_count?q=*")
-          response.read_body { |chunk| data << chunk }
-          result = JSON.parse(data)
-          count = result["count"]
-          insist { count } == event_count
-        end
+              # Wait until all events are available.
+              Stud::try(10.times) do
+                data = ""
+                response = ftw.prepareGet("http://127.0.0.1:9200/#{index}/_count?q=*").execute().get()
+                response.read_body { |chunk| data << chunk }
+                result = JSON.parse(data)
+                count = result["count"]
+                insist { count } == event_count
+              end
 
-        response = ftw.get!("http://127.0.0.1:9200/#{index}/_search?q=*&size=1000")
-        data = ""
-        response.read_body { |chunk| data << chunk }
-        result = JSON.parse(data)
-        result["hits"]["hits"].each do |doc|
-          insist { doc["_type"] } == "generated"
-        end
-      end
+              response = ftw.prepareGet("http://127.0.0.1:9200/#{index}/_search?q=*&size=1000").execute().get()
+              data = ""
+              response.read_body { |chunk| data << chunk }
+              result = JSON.parse(data)
+              result["hits"]["hits"].each do |doc|
+                insist { doc["_type"] } == "generated"
+              end
+            end
     end
   end
 end
