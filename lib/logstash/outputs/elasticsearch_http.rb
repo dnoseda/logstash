@@ -50,7 +50,6 @@ class LogStash::Outputs::ElasticSearchHTTP < LogStash::Outputs::Base
 
   public
   def register
-    require "ftw" # gem ftw
     @agent = com.ning.http.client.AsyncHttpClient.new()
     @queue = []
 
